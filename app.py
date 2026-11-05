@@ -1,66 +1,96 @@
-"""Simple multi-agent research assistant with transparent local sources."""
-import sys
-from dataclasses import dataclass
-from typing import List, Dict
+"""Multi-Agent 5G Network Operations Assistant (simulated data, no API key)."""
+from dataclasses import dataclass, asdict
+from typing import Dict, List
 
 
 @dataclass
-class Source:
-    title: str
-    url: str
-    text: str
+class CellMetrics:
+    cell_id: str
+    latency_ms: float
+    packet_loss_pct: float
+    cpu_pct: float
+    handover_fail_pct: float
 
 
-SOURCES = [
-    Source("3GPP: 5G system overview", "https://www.3gpp.org/technologies/5g-system-overview",
-           "5G systems support diverse services and require efficient network management and automation."),
-    Source("Ericsson: AI and automation", "https://www.ericsson.com/en/ai",
-           "AI can help communication service providers automate operations and improve network performance."),
-    Source("ITU: AI for networks", "https://www.itu.int/itu-t/recommendations/",
-           "AI techniques can assist network analysis, optimisation and operational decision support."),
-]
+class MonitoringAgent:
+    """Detects cells whose metrics exceed simple service thresholds."""
+    def detect(self, metrics: List[CellMetrics]) -> List[Dict]:
+        alerts = []
+        for item in metrics:
+            reasons = []
+            if item.latency_ms > 50: reasons.append("high latency")
+            if item.packet_loss_pct > 2: reasons.append("packet loss")
+            if item.cpu_pct > 85: reasons.append("high CPU")
+            if item.handover_fail_pct > 3: reasons.append("handover failures")
+            if reasons:
+                alerts.append({"cell_id": item.cell_id, "reasons": reasons, "metrics": asdict(item)})
+        return alerts
 
 
-class ResearchAgent:
-    """Ranks local source cards. Replace this with web search or a vector database later."""
-    def retrieve(self, question: str) -> List[Source]:
-        words = set(question.lower().replace("?", "").split())
-        return sorted(SOURCES, key=lambda s: len(words & set(s.text.lower().split())), reverse=True)
+class DiagnosisAgent:
+    """Explains likely causes from the abnormal metrics."""
+    def diagnose(self, alerts: List[Dict]) -> List[Dict]:
+        diagnoses = []
+        for alert in alerts:
+            m = alert["metrics"]
+            if m["cpu_pct"] > 85 and m["latency_ms"] > 50:
+                cause = "Cell congestion or overloaded edge compute"
+            elif m["handover_fail_pct"] > 3:
+                cause = "Mobility or neighbour-cell configuration issue"
+            elif m["packet_loss_pct"] > 2:
+                cause = "Radio interference or backhaul degradation"
+            else:
+                cause = "Needs deeper performance investigation"
+            diagnoses.append({**alert, "likely_cause": cause})
+        return diagnoses
 
 
-class AnalystAgent:
-    def analyse(self, sources: List[Source]) -> List[str]:
-        return [source.text for source in sources[:3]]
+class OptimisationAgent:
+    """Proposes a recommendation; it never makes network changes."""
+    def recommend(self, diagnoses: List[Dict]) -> List[Dict]:
+        output = []
+        for item in diagnoses:
+            cause = item["likely_cause"]
+            if "congestion" in cause:
+                action = "Review traffic balancing and capacity allocation for this cell."
+            elif "Mobility" in cause:
+                action = "Review neighbour relations and handover parameters in a test environment."
+            elif "interference" in cause:
+                action = "Run spectrum/interference analysis and inspect backhaul health."
+            else:
+                action = "Collect additional KPIs and create an engineering investigation ticket."
+            output.append({**item, "recommendation": action})
+        return output
 
 
-class CriticAgent:
-    def check(self, findings: List[str], sources: List[Source]) -> List[str]:
-        # A simple traceability check: every finding must be backed by one source card.
-        valid = []
-        source_text = " ".join(s.text for s in sources).lower()
-        for finding in findings:
-            if any(word in source_text for word in finding.lower().split() if len(word) > 5):
-                valid.append(finding)
-        return valid
+class SafetyAgent:
+    """Requires human approval before a recommendation can be acted on."""
+    def review(self, recommendations: List[Dict]) -> List[Dict]:
+        for item in recommendations:
+            item["safety_status"] = "Human engineer approval required — recommendation only"
+        return recommendations
 
 
-class WriterAgent:
-    def write(self, question: str, findings: List[str], sources: List[Source]) -> str:
-        lines = [f"# Research brief\n\n**Question:** {question}\n", "## Evidence-backed findings"]
-        lines.extend(f"- {finding}" for finding in findings)
-        lines.append("\n## Sources")
-        lines.extend(f"- [{source.title}]({source.url})" for source in sources[:3])
-        lines.append("\n*This is a prototype. Verify sources before using the report for decisions.*")
-        return "\n".join(lines)
+def sample_metrics() -> List[CellMetrics]:
+    return [
+        CellMetrics("SE-STO-001", 27, 0.3, 62, 0.8),
+        CellMetrics("SE-STO-002", 78, 3.1, 93, 1.2),
+        CellMetrics("SE-GOT-011", 32, 0.5, 71, 5.7),
+        CellMetrics("SE-MAL-004", 45, 4.5, 65, 1.4),
+    ]
 
 
-def run_workflow(question: str) -> str:
-    sources = ResearchAgent().retrieve(question)
-    findings = AnalystAgent().analyse(sources)
-    checked_findings = CriticAgent().check(findings, sources)
-    return WriterAgent().write(question, checked_findings, sources)
+def run_workflow(metrics: List[CellMetrics]) -> List[Dict]:
+    alerts = MonitoringAgent().detect(metrics)
+    diagnoses = DiagnosisAgent().diagnose(alerts)
+    recommendations = OptimisationAgent().recommend(diagnoses)
+    return SafetyAgent().review(recommendations)
 
 
 if __name__ == "__main__":
-    question = " ".join(sys.argv[1:]) or "How can AI improve 5G network optimisation?"
-    print(run_workflow(question))
+    results = run_workflow(sample_metrics())
+    print("5G Network Operations Assistant\n")
+    for result in results:
+        print(f"{result['cell_id']}: {result['likely_cause']}")
+        print(f"  Recommendation: {result['recommendation']}")
+        print(f"  Safety: {result['safety_status']}\n")
