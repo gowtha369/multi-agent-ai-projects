@@ -1,19 +1,23 @@
-# Simple Multi-Agent AI Projects
+# Multi-Agent 5G Network Operations Assistant
 
-Two small, dependency-free Python projects for an AI/ML portfolio. Each uses clearly separated agents that pass results through a workflow.
+This portfolio project simulates an AI-assisted network-operations workflow. It does **not** modify a network; all actions require human approval.
 
-## Projects
+## Agents
 
-| Project | What it demonstrates |
-|---|---|
-| `5g_network_ops` | anomaly monitoring, root-cause diagnosis, safe network recommendations |
-| `research_assistant` | retrieval, synthesis, claim checking, cited report writing |
+1. Monitoring Agent detects abnormal latency, packet loss, CPU use and handover failure rate.
+2. Diagnosis Agent identifies a likely cause.
+3. Optimisation Agent proposes a safe next step.
+4. Safety Agent labels every output as recommendation-only.
 
 ## Run
 
 ```bash
-python 5g_network_ops/app.py
-python research_assistant/app.py "How can AI improve 5G network optimisation?"
+python app.py
 ```
 
-No API key is required. The projects use deterministic rule-based agents so a recruiter can run them instantly. Replace the marked agent methods with an LLM or ML model later.
+## Next improvements
+
+- Read live/simulated KPI data from CSV.
+- Train an anomaly-detection model with Isolation Forest.
+- Add a Streamlit dashboard.
+- Replace the Diagnosis Agent with an LLM, while retaining safety review.
